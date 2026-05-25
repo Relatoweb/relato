@@ -68,14 +68,21 @@ function initAuth() {
         return showLoginError("Erro de autorização: " + resp.error);
       }
       state.accessToken = resp.access_token;
-      // Persiste por enquanto que a aba está aberta (sessionStorage seria
-      // ideal, mas para artefatos rodando em GitHub Pages é ok manter
-      // só em memória — o usuário re-loga ao recarregar)
       try {
         await ensureSpreadsheet();
         showForm();
       } catch (e) {
-        showLoginError("Erro ao preparar planilha: " + e.message);
+        // Detecta o erro mais comum (403 PERMISSION_DENIED) e mostra
+        // mensagem amigável + botão de reset automático
+        if (
+          String(e.message).includes("403") ||
+          String(e.message).includes("PERMISSION_DENIED") ||
+          String(e.message).includes("insufficient")
+        ) {
+          showPermissionError();
+        } else {
+          showLoginError("Erro ao preparar planilha: " + e.message);
+        }
       }
     },
   });
@@ -257,6 +264,64 @@ function showLoginError(msg) {
   let host = $("google-button-host");
   if (host) {
     host.innerHTML = `<div style="color: var(--danger); font-size: 13px; padding: 10px; border: 1px solid var(--danger); max-width: 360px; text-align: left;">${msg}</div>`;
+  }
+}
+
+// Mensagem amigável + botão de reset pra erro 403/PERMISSION_DENIED.
+// É de longe o erro mais comum (e o mais confuso pro usuário leigo).
+// Causa típica: usuário desmarcou alguma caixinha de permissão no Google,
+// ou token velho em cache sem permissões corretas.
+function showPermissionError() {
+  const host = $("google-button-host");
+  if (!host) return;
+  host.innerHTML = `
+    <div style="text-align: left; max-width: 380px; padding: 14px 16px; border: 1px solid var(--danger); border-left: 4px solid var(--danger); background: #faecec; color: #6e1612;">
+      <div style="font-weight: 600; font-size: 14px; margin-bottom: 8px;">
+        ⚠️ Faltam permissões para o Relato funcionar
+      </div>
+      <div style="font-size: 13px; line-height: 1.55; margin-bottom: 12px;">
+        Provavelmente alguma caixinha de permissão ficou
+        <strong>desmarcada</strong> quando o Google pediu autorização.
+        Clique no botão abaixo para resetar e tentar de novo —
+        e desta vez <strong>marque todas as caixinhas</strong>.
+      </div>
+      <button id="reset-login-btn"
+        style="background: var(--accent); color: white; border: none; padding: 10px 16px;
+               font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer; width: 100%;">
+        🔄 Resetar login e tentar de novo
+      </button>
+    </div>
+  `;
+  $("reset-login-btn")?.addEventListener("click", resetEverything);
+}
+
+// Faz uma limpeza COMPLETA do estado de autenticação:
+// 1. Revoga o access token atual no Google (se houver)
+// 2. Desabilita auto-select do One Tap
+// 3. Limpa sessionStorage do app
+// 4. Recarrega a página para um login totalmente do zero
+async function resetEverything() {
+  try {
+    if (state.accessToken) {
+      // Revoga o token atual — não bloqueia se falhar
+      await new Promise((resolve) => {
+        try {
+          google.accounts.oauth2.revoke(state.accessToken, resolve);
+          // failsafe se o callback não vier
+          setTimeout(resolve, 1500);
+        } catch {
+          resolve();
+        }
+      });
+    }
+    // Desabilita auto-select pra forçar a tela de escolha de conta
+    try {
+      google.accounts.id.disableAutoSelect();
+    } catch {}
+  } finally {
+    sessionStorage.clear();
+    // Recarrega forçando bypass de cache
+    location.reload();
   }
 }
 
