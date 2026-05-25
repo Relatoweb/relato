@@ -1,0 +1,491 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <title>Relato</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:wght@700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #f5f3ee;
+        --paper: #ffffff;
+        --ink: #1a1a1a;
+        --muted: #6b6b6b;
+        --line: #d8d4c8;
+        --accent: #0e5e5a;
+        --accent-soft: #d4e6e4;
+        --danger: #b3261e;
+        --field: #fafaf7;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        font-family: "IBM Plex Sans", system-ui, sans-serif;
+        font-size: 15px;
+        line-height: 1.5;
+        color: var(--ink);
+        background: var(--bg);
+        background-image: radial-gradient(
+            circle at 1px 1px,
+            rgba(0, 0, 0, 0.04) 1px,
+            transparent 0
+          );
+        background-size: 18px 18px;
+        min-height: 100vh;
+        -webkit-font-smoothing: antialiased;
+      }
+      .mono {
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 11px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+      .container {
+        max-width: 560px;
+        margin: 0 auto;
+        padding: 24px 18px 80px;
+      }
+      header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding-bottom: 18px;
+        border-bottom: 1px solid var(--line);
+        margin-bottom: 28px;
+      }
+      header .brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      header .mark {
+        width: 24px;
+        height: 24px;
+        display: inline-block;
+      }
+      header .mark svg {
+        width: 100%;
+        height: 100%;
+        display: block;
+      }
+      header h1 {
+        font-family: "Fraunces", Georgia, serif;
+        font-size: 18px;
+        font-weight: 700;
+        margin: 0;
+        letter-spacing: -0.02em;
+      }
+      header .user {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 13px;
+      }
+      header .user img {
+        width: 26px;
+        height: 26px;
+        border-radius: 50%;
+        border: 1px solid var(--line);
+      }
+      header .logout {
+        background: none;
+        border: none;
+        cursor: pointer;
+        color: var(--muted);
+        font: inherit;
+        font-size: 12px;
+        text-decoration: underline;
+        padding: 0;
+      }
+      .hero {
+        margin-bottom: 28px;
+      }
+      .hero h2 {
+        font-size: 26px;
+        font-weight: 600;
+        margin: 8px 0 6px;
+        letter-spacing: -0.02em;
+        line-height: 1.15;
+      }
+      .hero p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      /* ---- Login screen ---- */
+      .login-card {
+        background: var(--paper);
+        border: 1px solid var(--line);
+        padding: 40px 28px;
+        text-align: center;
+        margin-top: 40px;
+      }
+      .login-card .mono {
+        margin-bottom: 18px;
+        display: block;
+      }
+      .login-card h2 {
+        font-size: 22px;
+        font-weight: 600;
+        margin: 0 0 8px;
+        letter-spacing: -0.01em;
+      }
+      .login-card p {
+        color: var(--muted);
+        margin: 0 0 28px;
+        font-size: 14px;
+      }
+      #google-button-host {
+        display: flex;
+        justify-content: center;
+      }
+      .footer-note {
+        margin-top: 32px;
+        font-size: 12px;
+        color: var(--muted);
+        text-align: center;
+        line-height: 1.6;
+      }
+
+      /* ---- Form ---- */
+      form {
+        background: var(--paper);
+        border: 1px solid var(--line);
+        padding: 22px;
+      }
+      .field {
+        margin-bottom: 18px;
+      }
+      .field label {
+        display: block;
+        font-size: 12px;
+        font-weight: 500;
+        color: var(--ink);
+        margin-bottom: 6px;
+        letter-spacing: 0.01em;
+      }
+      .field label .req {
+        color: var(--danger);
+        margin-left: 2px;
+      }
+      .field input,
+      .field textarea {
+        width: 100%;
+        background: var(--field);
+        border: 1px solid var(--line);
+        padding: 10px 12px;
+        font-family: inherit;
+        font-size: 15px;
+        color: var(--ink);
+        border-radius: 0;
+        transition: border-color 0.15s, background 0.15s;
+        -webkit-appearance: none;
+        appearance: none;
+      }
+      .field input:focus,
+      .field textarea:focus {
+        outline: none;
+        border-color: var(--accent);
+        background: #fff;
+      }
+      .field textarea {
+        min-height: 80px;
+        resize: vertical;
+        font-family: inherit;
+      }
+      .field .hint {
+        font-size: 11px;
+        color: var(--muted);
+        margin-top: 4px;
+      }
+      .row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+      }
+      @media (max-width: 480px) {
+        .row {
+          grid-template-columns: 1fr;
+          gap: 0;
+        }
+      }
+
+      .submit-bar {
+        display: flex;
+        gap: 10px;
+        margin-top: 8px;
+      }
+      button.primary {
+        flex: 1;
+        background: var(--accent);
+        color: white;
+        border: none;
+        padding: 13px 18px;
+        font-family: inherit;
+        font-size: 14px;
+        font-weight: 600;
+        letter-spacing: 0.02em;
+        cursor: pointer;
+        transition: background 0.15s;
+      }
+      button.primary:hover {
+        background: #0a4946;
+      }
+      button.primary:disabled {
+        background: var(--muted);
+        cursor: not-allowed;
+      }
+      button.secondary {
+        background: transparent;
+        border: 1px solid var(--line);
+        padding: 13px 18px;
+        font-family: inherit;
+        font-size: 14px;
+        cursor: pointer;
+        color: var(--ink);
+      }
+
+      /* ---- Toast / status ---- */
+      .status {
+        margin-top: 18px;
+        padding: 12px 14px;
+        font-size: 13px;
+        border-left: 3px solid var(--accent);
+        background: var(--accent-soft);
+        color: #07403d;
+        display: none;
+      }
+      .status.error {
+        border-left-color: var(--danger);
+        background: #faecec;
+        color: #6e1612;
+      }
+      .status.show {
+        display: block;
+      }
+      .status a {
+        color: inherit;
+        text-decoration: underline;
+      }
+
+      /* ---- Loading ---- */
+      .loading {
+        display: inline-block;
+        width: 14px;
+        height: 14px;
+        border: 2px solid rgba(255, 255, 255, 0.4);
+        border-top-color: white;
+        border-radius: 50%;
+        animation: spin 0.7s linear infinite;
+        vertical-align: -2px;
+        margin-right: 8px;
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      .hidden {
+        display: none !important;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header id="app-header" class="hidden">
+        <div class="brand">
+          <span class="mark">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path
+                d="M 12 2 C 7 2 4 5.5 4 10 C 4 15 12 22 12 22 C 12 22 20 15 20 10 C 20 5.5 17 2 12 2 Z"
+                fill="#0e5e5a"
+              />
+              <path
+                d="M 9 7.5 L 9 13 M 9 7.5 L 13 7.5 Q 15 7.5 15 9.5 Q 15 11.5 13 11.5 L 9 11.5 M 12 11.5 L 15 14"
+                stroke="#fafaf7"
+                stroke-width="1.6"
+                fill="none"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </span>
+          <h1>relato.</h1>
+        </div>
+        <div class="user">
+          <img id="user-avatar" alt="" />
+          <button class="logout" id="logout-btn">sair</button>
+        </div>
+      </header>
+
+      <!-- Tela de login -->
+      <section id="login-screen">
+        <div style="display: flex; align-items: center; gap: 10px">
+          <span style="width: 24px; height: 24px; display: inline-block">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:100%;display:block">
+              <path d="M 12 2 C 7 2 4 5.5 4 10 C 4 15 12 22 12 22 C 12 22 20 15 20 10 C 20 5.5 17 2 12 2 Z" fill="#0e5e5a" />
+              <path d="M 9 7.5 L 9 13 M 9 7.5 L 13 7.5 Q 15 7.5 15 9.5 Q 15 11.5 13 11.5 L 9 11.5 M 12 11.5 L 15 14" stroke="#fafaf7" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          </span>
+          <span style="font-family: 'Fraunces', Georgia, serif; font-size: 18px; font-weight: 700; letter-spacing: -0.02em">
+            relato.
+          </span>
+        </div>
+
+        <div class="login-card">
+          <span class="mono">acesso</span>
+          <h2>Entre com sua conta Google</h2>
+          <p>
+            Cada vendedor grava as visitas em uma planilha privada<br />
+            no próprio Google Drive.
+          </p>
+          <div id="google-button-host"></div>
+          <div class="footer-note">
+            Ao entrar, você autoriza o <strong>Relato</strong> a criar e editar a
+            planilha <em>Relato — Visitas</em> dentro do seu Google Drive.
+            Nenhum outro arquivo é acessado.
+          </div>
+        </div>
+      </section>
+
+      <!-- Tela do formulário -->
+      <section id="form-screen" class="hidden">
+        <div class="hero">
+          <span class="mono">novo registro</span>
+          <h2>Nova visita</h2>
+          <p>Preencha após a visita. Os dados vão direto pra sua planilha.</p>
+        </div>
+
+        <form id="visit-form" autocomplete="on" novalidate>
+          <div class="row">
+            <div class="field">
+              <label for="data_visita">
+                Data da visita<span class="req">*</span>
+              </label>
+              <input type="date" id="data_visita" required />
+            </div>
+            <div class="field">
+              <label for="cidade">Cidade<span class="req">*</span></label>
+              <input
+                type="text"
+                id="cidade"
+                required
+                placeholder="ex: Caxias do Sul"
+              />
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="field">
+              <label for="cliente">Cliente<span class="req">*</span></label>
+              <input
+                type="text"
+                id="cliente"
+                required
+                placeholder="Nome da empresa"
+              />
+            </div>
+            <div class="field">
+              <label for="contato">Contato</label>
+              <input
+                type="text"
+                id="contato"
+                placeholder="Pessoa, cargo, telefone"
+              />
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="finalidade">Finalidade</label>
+            <input
+              type="text"
+              id="finalidade"
+              placeholder="ex: Prospecção, follow-up, técnica"
+            />
+          </div>
+
+          <div class="field">
+            <label for="materiais">Materiais / Segmento</label>
+            <input
+              type="text"
+              id="materiais"
+              placeholder="Materiais ou segmento de atuação"
+            />
+          </div>
+
+          <div class="row">
+            <div class="field">
+              <label for="estoque">Planej. estoque</label>
+              <input
+                type="text"
+                id="estoque"
+                placeholder="Observações de estoque"
+              />
+            </div>
+            <div class="field">
+              <label for="concorrencia">Concorrência</label>
+              <input
+                type="text"
+                id="concorrencia"
+                placeholder="Concorrentes mencionados"
+              />
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="proxima">Próxima visita</label>
+            <input type="date" id="proxima" />
+          </div>
+
+          <div class="field">
+            <label for="info">Informações relevantes</label>
+            <textarea
+              id="info"
+              placeholder="Anotações, próximos passos, oportunidades, etc."
+            ></textarea>
+          </div>
+
+          <div class="submit-bar">
+            <button type="submit" class="primary" id="submit-btn">
+              Salvar visita
+            </button>
+            <button type="button" class="secondary" id="clear-btn">
+              Limpar
+            </button>
+          </div>
+
+          <div class="status" id="status"></div>
+        </form>
+
+        <div class="footer-note">
+          <a id="open-sheet-link" href="#" target="_blank" rel="noopener">
+            Abrir minha planilha no Google Sheets ↗
+          </a>
+        </div>
+      </section>
+    </div>
+
+    <!-- Google Identity Services + Sheets API -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script src="https://apis.google.com/js/api.js"></script>
+    <script src="./config.js"></script>
+    <script src="./app.js"></script>
+  </body>
+</html>
