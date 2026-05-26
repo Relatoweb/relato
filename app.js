@@ -249,6 +249,9 @@ function showForm() {
   $("login-screen").classList.add("hidden");
   $("app-header").classList.remove("hidden");
   $("form-screen").classList.remove("hidden");
+  $("dashboard-screen")?.classList.add("hidden");
+  $("nav-form-btn")?.classList.add("active");
+  $("nav-dashboard-btn")?.classList.remove("active");
   if (state.user) {
     $("user-avatar").src = state.user.picture || "";
     $("user-avatar").alt = state.user.name || "";
@@ -258,6 +261,40 @@ function showForm() {
   // Default da data: hoje
   const today = new Date().toISOString().slice(0, 10);
   if (!$("data_visita").value) $("data_visita").value = today;
+
+  // Carrega sugestões de autocomplete em background (não bloqueia)
+  loadVisitsCached().then(populateAutocomplete).catch(() => {});
+}
+
+// Mostra a tela do dashboard e carrega dados
+async function showDashboard() {
+  $("login-screen").classList.add("hidden");
+  $("app-header").classList.remove("hidden");
+  $("form-screen").classList.add("hidden");
+  $("dashboard-screen").classList.remove("hidden");
+  $("nav-form-btn")?.classList.remove("active");
+  $("nav-dashboard-btn")?.classList.add("active");
+
+  // Reseta estados
+  $("dashboard-loading").classList.remove("hidden");
+  $("dashboard-empty").classList.add("hidden");
+  $("dashboard-error").classList.add("hidden");
+  $("dashboard-content").classList.add("hidden");
+
+  try {
+    const visits = await loadVisitsCached();
+    $("dashboard-loading").classList.add("hidden");
+    if (!visits || visits.length === 0) {
+      $("dashboard-empty").classList.remove("hidden");
+      return;
+    }
+    $("dashboard-content").classList.remove("hidden");
+    renderDashboard(visits);
+  } catch (e) {
+    $("dashboard-loading").classList.add("hidden");
+    $("dashboard-error").classList.remove("hidden");
+    console.error("Erro ao carregar dashboard:", e);
+  }
 }
 
 function showLoginError(msg) {
@@ -338,6 +375,12 @@ function setStatus(msg, type = "ok") {
 // Submit
 // ------------------------------------------------------------
 $("logout-btn")?.addEventListener("click", logout);
+$("nav-form-btn")?.addEventListener("click", showForm);
+$("nav-dashboard-btn")?.addEventListener("click", showDashboard);
+$("dashboard-retry")?.addEventListener("click", () => {
+  visitsCache = null;
+  showDashboard();
+});
 $("clear-btn")?.addEventListener("click", () => {
   $("visit-form").reset();
   $("data_visita").value = new Date().toISOString().slice(0, 10);
@@ -379,6 +422,11 @@ $("visit-form")?.addEventListener("submit", async (ev) => {
     setStatus("✓ Visita salva na sua planilha.");
     $("visit-form").reset();
     $("data_visita").value = new Date().toISOString().slice(0, 10);
+    // Invalida cache pra próxima vez que o dashboard/autocomplete carregar
+    visitsCache = null;
+    visitsCacheAt = 0;
+    // Recarrega sugestões de autocomplete em background
+    loadVisitsCached().then(populateAutocomplete).catch(() => {});
   } catch (e) {
     if (
       String(e.message).includes("401") ||
@@ -401,4 +449,317 @@ function formatDateBR(iso) {
   if (!iso) return "";
   const [y, m, d] = iso.split("-");
   return `${d}/${m}/${y}`;
+}
+
+// ============================================================
+// Autocomplete + Dashboard
+// ============================================================
+// Cache de visitas em memória — evita reler a planilha toda hora.
+// Vale 5 minutos por padrão. É invalidado após salvar nova visita.
+let visitsCache = null;
+let visitsCacheAt = 0;
+const CACHE_TTL_MS = 5 * 60 * 1000;
+
+// Lê toda a aba "Visitas" e devolve objetos {data, cidade, cliente, ...}
+async function loadVisitsCached() {
+  const now = Date.now();
+  if (visitsCache && now - visitsCacheAt < CACHE_TTL_MS) {
+    return visitsCache;
+  }
+  if (!state.spreadsheetId || !state.accessToken) return [];
+
+  const range = encodeURIComponent(`${CONFIG.SHEET_NAME}!A2:J`); // pula header
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${state.spreadsheetId}/values/${range}`;
+  const data = await sheetsApi(url);
+  const rows = data.values || [];
+
+  // Mapeia pra objetos pra ficar mais fácil de usar
+  const visits = rows
+    .filter((r) => r && (r[0] || r[2])) // tem que ter pelo menos data ou cliente
+    .map((r) => ({
+      data: r[0] || "",
+      cidade: r[1] || "",
+      cliente: r[2] || "",
+      contato: r[3] || "",
+      finalidade: r[4] || "",
+      materiais: r[5] || "",
+      estoque: r[6] || "",
+      concorrencia: r[7] || "",
+      proxima: r[8] || "",
+      info: r[9] || "",
+    }));
+
+  visitsCache = visits;
+  visitsCacheAt = now;
+  return visits;
+}
+
+// Popula os 4 datalists com valores únicos das visitas anteriores
+function populateAutocomplete(visits) {
+  if (!visits || visits.length === 0) return;
+  fillDatalist("suggest-clientes", uniqueValues(visits, "cliente"));
+  fillDatalist("suggest-cidades", uniqueValues(visits, "cidade"));
+  fillDatalist("suggest-contatos", uniqueValues(visits, "contato"));
+  fillDatalist("suggest-finalidades", uniqueValues(visits, "finalidade"));
+}
+
+function uniqueValues(visits, key) {
+  const seen = new Map();
+  for (const v of visits) {
+    const val = (v[key] || "").trim();
+    if (!val) continue;
+    const lower = val.toLowerCase();
+    if (!seen.has(lower)) seen.set(lower, val); // preserva a primeira grafia
+  }
+  return Array.from(seen.values()).sort((a, b) => a.localeCompare(b, "pt-BR"));
+}
+
+function fillDatalist(id, values) {
+  const el = $(id);
+  if (!el) return;
+  el.innerHTML = values
+    .map((v) => `<option value="${escapeAttr(v)}"></option>`)
+    .join("");
+}
+
+function escapeAttr(s) {
+  return String(s).replace(/"/g, "&quot;").replace(/</g, "&lt;");
+}
+
+// ============================================================
+// Renderização do Dashboard
+// ============================================================
+function renderDashboard(visits) {
+  renderKPIs(visits);
+  renderMonthChart(visits);
+  renderBarList("chart-clients", topCount(visits, "cliente", 10));
+  renderBarList("chart-cities", topCount(visits, "cidade", 10));
+  renderPie("chart-purpose", topCount(visits, "finalidade", 6));
+}
+
+// Cards do topo: total, este mês, média semanal últimos 3 meses
+function renderKPIs(visits) {
+  const total = visits.length;
+  const now = new Date();
+  const thisMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+
+  let thisMonth = 0;
+  let last3MonthsCount = 0;
+  const cutoff = new Date(now);
+  cutoff.setMonth(cutoff.getMonth() - 3);
+
+  for (const v of visits) {
+    const d = parseDateBR(v.data);
+    if (!d) continue;
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+    if (key === thisMonthKey) thisMonth++;
+    if (d >= cutoff && d <= now) last3MonthsCount++;
+  }
+  // 3 meses ≈ 13 semanas
+  const weekly = last3MonthsCount > 0 ? (last3MonthsCount / 13).toFixed(1) : "0";
+
+  $("kpi-total").textContent = total;
+  $("kpi-month").textContent = thisMonth;
+  $("kpi-weekly").textContent = weekly;
+}
+
+// Converte DD/MM/YYYY para Date; aceita também YYYY-MM-DD como fallback
+function parseDateBR(s) {
+  if (!s) return null;
+  s = String(s).trim();
+  let m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (m) return new Date(+m[3], +m[2] - 1, +m[1]);
+  m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+  if (m) return new Date(+m[1], +m[2] - 1, +m[3]);
+  return null;
+}
+
+// Conta ocorrências de um campo e devolve top N {label, count}
+function topCount(visits, key, n) {
+  const counts = new Map();
+  for (const v of visits) {
+    const val = (v[key] || "").trim();
+    if (!val) continue;
+    // Agrupa case-insensitive mas mantém a grafia mais frequente
+    const lower = val.toLowerCase();
+    const entry = counts.get(lower) || { label: val, count: 0 };
+    entry.count++;
+    counts.set(lower, entry);
+  }
+  return Array.from(counts.values())
+    .sort((a, b) => b.count - a.count)
+    .slice(0, n);
+}
+
+// Gráfico de barras horizontais (top clientes / top cidades)
+function renderBarList(containerId, data) {
+  const container = $(containerId);
+  if (!container) return;
+  if (data.length === 0) {
+    container.innerHTML = `<p style="color: var(--muted); font-size: 12px; padding: 10px 0;">Sem dados ainda.</p>`;
+    return;
+  }
+  const max = data[0].count;
+  container.innerHTML = `
+    <div class="bar-list">
+      ${data
+        .map((row) => {
+          const pct = max > 0 ? (row.count / max) * 100 : 0;
+          return `
+            <div class="bar-row">
+              <span class="bar-name" title="${escapeAttr(row.label)}">${escapeHtml(row.label)}</span>
+              <span class="bar-track"><span class="bar-fill" style="width:${pct.toFixed(1)}%"></span></span>
+              <span class="bar-count">${row.count}</span>
+            </div>`;
+        })
+        .join("")}
+    </div>
+  `;
+}
+
+function escapeHtml(s) {
+  return String(s)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
+// Gráfico de linha — visitas por mês nos últimos 6 meses
+function renderMonthChart(visits) {
+  const months = [];
+  const now = new Date();
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    months.push({
+      key: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`,
+      label: d.toLocaleDateString("pt-BR", { month: "short" }).replace(".", ""),
+      count: 0,
+    });
+  }
+  const idx = Object.fromEntries(months.map((m, i) => [m.key, i]));
+  for (const v of visits) {
+    const d = parseDateBR(v.data);
+    if (!d) continue;
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+    if (key in idx) months[idx[key]].count++;
+  }
+
+  const max = Math.max(1, ...months.map((m) => m.count));
+  const W = 560;
+  const H = 200;
+  const padL = 30;
+  const padR = 16;
+  const padT = 14;
+  const padB = 30;
+  const innerW = W - padL - padR;
+  const innerH = H - padT - padB;
+  const stepX = innerW / (months.length - 1);
+
+  // Pontos da linha
+  const points = months.map((m, i) => {
+    const x = padL + i * stepX;
+    const y = padT + innerH - (m.count / max) * innerH;
+    return { x, y, ...m };
+  });
+
+  const linePath = points
+    .map((p, i) => (i === 0 ? `M ${p.x} ${p.y}` : `L ${p.x} ${p.y}`))
+    .join(" ");
+  const areaPath =
+    linePath +
+    ` L ${padL + innerW} ${padT + innerH} L ${padL} ${padT + innerH} Z`;
+
+  // Linhas de grid: 4 horizontais
+  const gridY = [0, 0.25, 0.5, 0.75, 1].map((p) => padT + innerH * p);
+  const yLabels = [0, 0.5, 1].map((p) => Math.round(max * (1 - p)));
+
+  $("chart-month").innerHTML = `
+    <svg class="chart-svg" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">
+      ${gridY
+        .map(
+          (y) =>
+            `<line x1="${padL}" x2="${padL + innerW}" y1="${y}" y2="${y}" stroke="var(--line)" stroke-width="1" stroke-dasharray="${y === padT + innerH ? "0" : "2,3"}" />`,
+        )
+        .join("")}
+      ${yLabels
+        .map(
+          (val, i) =>
+            `<text x="${padL - 6}" y="${padT + (innerH * i) / 2 + 4}" font-size="10" text-anchor="end" fill="var(--muted)" font-family="IBM Plex Sans">${val}</text>`,
+        )
+        .join("")}
+      <path d="${areaPath}" fill="var(--accent-soft)" opacity="0.6" />
+      <path d="${linePath}" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" />
+      ${points
+        .map(
+          (p) => `
+        <circle cx="${p.x}" cy="${p.y}" r="3.5" fill="var(--accent)" />
+        <text x="${p.x}" y="${p.y - 8}" font-size="10" text-anchor="middle" fill="var(--ink)" font-weight="600" font-family="IBM Plex Sans">${p.count > 0 ? p.count : ""}</text>
+        <text x="${p.x}" y="${H - 10}" font-size="10" text-anchor="middle" fill="var(--muted)" font-family="IBM Plex Sans">${p.label}</text>
+      `,
+        )
+        .join("")}
+    </svg>
+  `;
+}
+
+// Gráfico de pizza — top finalidades
+function renderPie(containerId, data) {
+  const container = $(containerId);
+  if (!container) return;
+  if (data.length === 0) {
+    container.innerHTML = `<p style="color: var(--muted); font-size: 12px; padding: 10px 0;">Sem dados ainda.</p>`;
+    return;
+  }
+  const total = data.reduce((s, d) => s + d.count, 0);
+  // Paleta harmoniosa com o verde principal
+  const colors = [
+    "#0e5e5a",
+    "#1d8b85",
+    "#3aa8a2",
+    "#c87a1f",
+    "#e0a358",
+    "#6b6b6b",
+  ];
+
+  const cx = 70;
+  const cy = 70;
+  const r = 60;
+  let angle = -Math.PI / 2; // começa no topo
+  const slices = data.map((d, i) => {
+    const fraction = d.count / total;
+    const a1 = angle;
+    const a2 = angle + fraction * Math.PI * 2;
+    const x1 = cx + r * Math.cos(a1);
+    const y1 = cy + r * Math.sin(a1);
+    const x2 = cx + r * Math.cos(a2);
+    const y2 = cy + r * Math.sin(a2);
+    const largeArc = fraction > 0.5 ? 1 : 0;
+    const path =
+      fraction >= 0.999
+        ? `M ${cx - r} ${cy} A ${r} ${r} 0 1 1 ${cx + r} ${cy} A ${r} ${r} 0 1 1 ${cx - r} ${cy} Z`
+        : `M ${cx} ${cy} L ${x1} ${y1} A ${r} ${r} 0 ${largeArc} 1 ${x2} ${y2} Z`;
+    angle = a2;
+    return { path, color: colors[i % colors.length], ...d, pct: fraction * 100 };
+  });
+
+  container.innerHTML = `
+    <div class="pie-wrap">
+      <svg viewBox="0 0 140 140" xmlns="http://www.w3.org/2000/svg" style="width: 140px; height: 140px;">
+        ${slices.map((s) => `<path d="${s.path}" fill="${s.color}" stroke="#fff" stroke-width="1" />`).join("")}
+      </svg>
+      <div class="pie-legend">
+        ${slices
+          .map(
+            (s) => `
+          <div class="pie-legend-item">
+            <span class="swatch" style="background:${s.color}"></span>
+            <span class="lbl" title="${escapeAttr(s.label)}">${escapeHtml(s.label)}</span>
+            <span class="pct">${s.count} · ${s.pct.toFixed(0)}%</span>
+          </div>
+        `,
+          )
+          .join("")}
+      </div>
+    </div>
+  `;
 }
