@@ -56,7 +56,7 @@
         color: var(--muted);
       }
       .container {
-        max-width: 560px;
+        max-width: 640px;
         margin: 0 auto;
         padding: 24px 18px 80px;
       }
@@ -302,6 +302,239 @@
         }
       }
 
+      /* ---- Nav (header) ---- */
+      .nav {
+        display: flex;
+        gap: 4px;
+        background: var(--field);
+        padding: 3px;
+        border: 1px solid var(--line);
+        border-radius: 2px;
+      }
+      .nav-btn {
+        background: transparent;
+        border: none;
+        padding: 6px 12px;
+        font: inherit;
+        font-size: 12px;
+        font-weight: 500;
+        color: var(--muted);
+        cursor: pointer;
+        border-radius: 1px;
+        transition: background 0.15s, color 0.15s;
+      }
+      .nav-btn:hover {
+        color: var(--ink);
+      }
+      .nav-btn.active {
+        background: var(--paper);
+        color: var(--accent);
+        font-weight: 600;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+      }
+      @media (max-width: 540px) {
+        header {
+          flex-wrap: wrap;
+          row-gap: 10px;
+        }
+        .nav {
+          order: 3;
+          width: 100%;
+        }
+        .nav-btn {
+          flex: 1;
+          text-align: center;
+        }
+      }
+
+      /* ---- Dashboard ---- */
+      .dashboard-loading,
+      .dashboard-empty,
+      .dashboard-error {
+        background: var(--paper);
+        border: 1px solid var(--line);
+        padding: 40px 22px;
+        text-align: center;
+      }
+      .dashboard-loading p,
+      .dashboard-empty p,
+      .dashboard-error p {
+        margin: 8px 0;
+        color: var(--muted);
+        font-size: 13px;
+      }
+      .dashboard-empty p:first-child {
+        font-size: 14px;
+        color: var(--ink);
+        font-weight: 500;
+      }
+      .spinner-big {
+        width: 32px;
+        height: 32px;
+        border: 3px solid var(--line);
+        border-top-color: var(--accent);
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+        margin: 0 auto 14px;
+      }
+
+      /* KPI cards */
+      .kpi-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+        margin-bottom: 18px;
+      }
+      @media (max-width: 540px) {
+        .kpi-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+      .kpi-card {
+        background: var(--paper);
+        border: 1px solid var(--line);
+        padding: 14px 16px;
+        display: flex;
+        flex-direction: column;
+      }
+      .kpi-label {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--muted);
+        font-weight: 500;
+      }
+      .kpi-value {
+        font-family: "Fraunces", Georgia, serif;
+        font-size: 36px;
+        font-weight: 700;
+        line-height: 1;
+        margin: 6px 0 4px;
+        color: var(--accent);
+        letter-spacing: -0.02em;
+      }
+      .kpi-sub {
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      /* Chart cards */
+      .chart-card {
+        background: var(--paper);
+        border: 1px solid var(--line);
+        padding: 16px 18px 18px;
+        margin-bottom: 14px;
+      }
+      .chart-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        margin-bottom: 14px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid var(--line);
+      }
+      .chart-head h3 {
+        font-size: 14px;
+        font-weight: 600;
+        margin: 0;
+        color: var(--ink);
+      }
+      .chart-head .chart-sub {
+        font-size: 11px;
+        color: var(--muted);
+      }
+      .chart-area {
+        min-height: 60px;
+      }
+      .bar-list {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .bar-row {
+        display: grid;
+        grid-template-columns: 110px 1fr 36px;
+        align-items: center;
+        gap: 10px;
+        font-size: 12px;
+      }
+      @media (max-width: 540px) {
+        .bar-row {
+          grid-template-columns: 90px 1fr 32px;
+          font-size: 11px;
+        }
+      }
+      .bar-row .bar-name {
+        color: var(--ink);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .bar-row .bar-track {
+        background: var(--field);
+        border: 1px solid var(--line);
+        height: 14px;
+      }
+      .bar-row .bar-fill {
+        background: var(--accent);
+        height: 100%;
+        transition: width 0.3s ease;
+      }
+      .bar-row .bar-count {
+        font-variant-numeric: tabular-nums;
+        color: var(--muted);
+        text-align: right;
+        font-weight: 500;
+      }
+      .chart-svg {
+        width: 100%;
+        height: auto;
+        display: block;
+      }
+      .pie-wrap {
+        display: grid;
+        grid-template-columns: 140px 1fr;
+        gap: 20px;
+        align-items: center;
+      }
+      @media (max-width: 540px) {
+        .pie-wrap {
+          grid-template-columns: 1fr;
+          gap: 14px;
+        }
+        .pie-wrap svg {
+          margin: 0 auto;
+          max-width: 200px;
+        }
+      }
+      .pie-legend {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        font-size: 12px;
+      }
+      .pie-legend-item {
+        display: grid;
+        grid-template-columns: 12px 1fr auto;
+        align-items: center;
+        gap: 8px;
+      }
+      .pie-legend-item .swatch {
+        width: 12px;
+        height: 12px;
+        border-radius: 2px;
+      }
+      .pie-legend-item .lbl {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      .pie-legend-item .pct {
+        font-variant-numeric: tabular-nums;
+        color: var(--muted);
+        font-weight: 500;
+      }
+
       .hidden {
         display: none !important;
       }
@@ -329,6 +562,10 @@
           </span>
           <h1>relato.</h1>
         </div>
+        <nav class="nav">
+          <button class="nav-btn active" id="nav-form-btn">Nova visita</button>
+          <button class="nav-btn" id="nav-dashboard-btn">Dashboard</button>
+        </nav>
         <div class="user">
           <img id="user-avatar" alt="" />
           <button class="logout" id="logout-btn">sair</button>
@@ -387,6 +624,8 @@
                 type="text"
                 id="cidade"
                 required
+                list="suggest-cidades"
+                autocomplete="off"
                 placeholder="ex: Caxias do Sul"
               />
             </div>
@@ -399,6 +638,8 @@
                 type="text"
                 id="cliente"
                 required
+                list="suggest-clientes"
+                autocomplete="off"
                 placeholder="Nome da empresa"
               />
             </div>
@@ -407,6 +648,8 @@
               <input
                 type="text"
                 id="contato"
+                list="suggest-contatos"
+                autocomplete="off"
                 placeholder="Pessoa, cargo, telefone"
               />
             </div>
@@ -417,6 +660,8 @@
             <input
               type="text"
               id="finalidade"
+              list="suggest-finalidades"
+              autocomplete="off"
               placeholder="ex: Prospecção, follow-up, técnica"
             />
           </div>
@@ -480,7 +725,98 @@
           </a>
         </div>
       </section>
+
+      <!-- Tela do Dashboard -->
+      <section id="dashboard-screen" class="hidden">
+        <div class="hero">
+          <span class="mono">dashboard</span>
+          <h2>Suas visitas</h2>
+          <p>Resumo das visitas registradas na sua planilha.</p>
+        </div>
+
+        <!-- Loading state -->
+        <div id="dashboard-loading" class="dashboard-loading">
+          <div class="spinner-big"></div>
+          <p>Carregando suas visitas...</p>
+        </div>
+
+        <!-- Empty state -->
+        <div id="dashboard-empty" class="dashboard-empty hidden">
+          <p>Nenhuma visita registrada ainda.</p>
+          <p class="sub">Cadastre sua primeira visita pra ver os gráficos aqui.</p>
+        </div>
+
+        <!-- Error state -->
+        <div id="dashboard-error" class="dashboard-error hidden">
+          <p>Não consegui carregar suas visitas.</p>
+          <button class="secondary" id="dashboard-retry">Tentar de novo</button>
+        </div>
+
+        <!-- Conteúdo (cards + gráficos) -->
+        <div id="dashboard-content" class="hidden">
+          <!-- KPI cards -->
+          <div class="kpi-grid">
+            <div class="kpi-card">
+              <span class="kpi-label">Total</span>
+              <span class="kpi-value" id="kpi-total">0</span>
+              <span class="kpi-sub">visitas</span>
+            </div>
+            <div class="kpi-card">
+              <span class="kpi-label">Este mês</span>
+              <span class="kpi-value" id="kpi-month">0</span>
+              <span class="kpi-sub">visitas</span>
+            </div>
+            <div class="kpi-card">
+              <span class="kpi-label">Média semanal</span>
+              <span class="kpi-value" id="kpi-weekly">0</span>
+              <span class="kpi-sub">últimos 3 meses</span>
+            </div>
+          </div>
+
+          <!-- Visitas por mês -->
+          <div class="chart-card">
+            <div class="chart-head">
+              <h3>Visitas por mês</h3>
+              <span class="chart-sub">últimos 6 meses</span>
+            </div>
+            <div id="chart-month" class="chart-area"></div>
+          </div>
+
+          <!-- Top 10 clientes -->
+          <div class="chart-card">
+            <div class="chart-head">
+              <h3>Top clientes</h3>
+              <span class="chart-sub">por número de visitas</span>
+            </div>
+            <div id="chart-clients" class="chart-area"></div>
+          </div>
+
+          <!-- Top 10 cidades -->
+          <div class="chart-card">
+            <div class="chart-head">
+              <h3>Top cidades</h3>
+              <span class="chart-sub">distribuição geográfica</span>
+            </div>
+            <div id="chart-cities" class="chart-area"></div>
+          </div>
+
+          <!-- Finalidade (pizza) -->
+          <div class="chart-card">
+            <div class="chart-head">
+              <h3>Finalidade das visitas</h3>
+              <span class="chart-sub">tipos mais frequentes</span>
+            </div>
+            <div id="chart-purpose" class="chart-area"></div>
+          </div>
+        </div>
+      </section>
     </div>
+
+    <!-- Listas de autocomplete (preenchidas dinamicamente pelo app.js) -->
+    <datalist id="suggest-clientes"></datalist>
+    <datalist id="suggest-cidades"></datalist>
+    <datalist id="suggest-contatos"></datalist>
+    <datalist id="suggest-finalidades"></datalist>
 
     <!-- Google Identity Services + Sheets API -->
     <script src="https://accounts.google.com/gsi/client" async defer></script>
